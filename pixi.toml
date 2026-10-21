@@ -1,0 +1,41 @@
+[workspace]
+name = "fast_foundation_stereo"
+channels = ["https://fast.prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[environments]
+# ROS 2 Humble + Fast-FoundationStereo inference, see ros2/ffs_node.py.
+gsplat-policy = { features = ["gsplat-policy"] }
+
+# Channels, python and numpy mirror the `humble` env of ../pixi_franka_crisp_ws so the
+# shared rattler/uv cache serves (almost) everything and the two envs speak the same DDS.
+[feature.gsplat-policy]
+channels = ["https://prefix.dev/robostack-humble"]
+
+[feature.gsplat-policy.dependencies]
+python = "3.12.*"
+numpy = "<=2.3"
+ros-humble-ros-base = "*"
+ros-humble-message-filters = "*"
+ros-humble-rmw-fastrtps-cpp = "*"
+ros-humble-rviz2 = "*"
+py-opencv = "*"
+pyyaml = "*"
+omegaconf = "*"  # the pickled model stores its args as a DictConfig
+imageio = "*"
+gdown = "*"
+
+# torch 2.10.0+cu128 is what the policy-server env already pulled, so it is a cache hit.
+[feature.gsplat-policy.pypi-dependencies]
+torch = "==2.10.0"
+torchvision = "==0.25.0"
+timm = "*"
+
+[feature.gsplat-policy.activation]
+scripts = ["ros2/set_ros_env.sh"]
+
+[feature.gsplat-policy.tasks]
+# Only the 23-36-37 checkpoint; the Drive folder (README "Weights") also holds the others + ONNX exports.
+download-weights = "mkdir -p weights/23-36-37 && gdown 1GDBRYL-ZaLpXEtWfGFRJvkBc_2sywjgj -O weights/23-36-37/cfg.yaml && gdown 1W1V1H64l9bAi97boEQQ2ueNzzGmSMz-E -O weights/23-36-37/model_best_bp2_serialize.pth"
+node = "python ros2/ffs_node.py"
+rviz = "rviz2 -d ros2/ffs.rviz"
